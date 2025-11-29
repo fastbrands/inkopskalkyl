@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inköpskalkyl Kina (USD → SEK)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .app {
+      background: #ffffff;
+      max-width: 720px;
+      width: 100%;
+      margin: 24px;
+      padding: 24px 20px 28px;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      font-size: 1.5rem;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+
+    .rate-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 0.9rem;
+    }
+
+    .rate-row strong {
+      margin-right: 4px;
+    }
+
+    .rate-value {
+      font-weight: 600;
+    }
+
+    .rate-status {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #111827;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.85rem;
+    }
+
+    label {
+      font-weight: 500;
+      color: #374151;
+    }
+
+    label span {
+      font-weight: 400;
+      color: #6b7280;
+      font-size: 0.8rem;
+    }
+
+    input[type="number"] {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input[type="number"]:focus {
+      border-color: #111827;
+      box-shadow: 0 0 0 1px #11182710;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 18px;
+    }
+
+    .results {
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 14px 14px 10px;
+      font-size: 0.9rem;
+    }
+
+    .results h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .result-card {
+      padding: 10px 10px 8px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .result-value {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .result-sub {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .error {
+      margin-top: 8px;
+      color: #b91c1c;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        margin: 10px;
+        padding: 18px 14px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Inköpskalkyl från Kina</h1>
+    <p class="subtitle">Räkna snabbt ut kostnad per pcs i USD och SEK, inklusive frakt.</p>
+
+    <!-- Valutakurs -->
+    <div class="rate-row">
+      <div>
+        <strong>USD → SEK:</strong>
+        <span class="rate-value" id="rateValue">Hämtar…</span>
+      </div>
+      <div class="rate-status" id="rateStatus">Ingen kurs hämtad än</div>
+      <button class="btn btn-secondary" id="refreshRateBtn" type="button">Uppdatera kurs</button>
+    </div>
+
+    <!-- Inputs -->
+    <div class="form-grid">
+      <div class="field">
+        <label for="unitPriceUsd">
+          Inpris per pcs (USD)
+        </label>
+        <input type="number" id="unitPriceUsd" step="0.0001" min="0" placeholder="t.ex. 1.25" />
+      </div>
+
+      <div class="field">
+        <label for="quantity">
+          Antal pcs (volym)
+        </label>
+        <input type="number" id="quantity" step="1" min="1" placeholder="t.ex. 1000" />
+      </div>
+
+      <div class="field">
+        <label for="totalWeightKg">
+          Total vikt (kg)
+          <span>hela sändningen</span>
+        </label>
+        <input type="number" id="totalWeightKg" step="0.01" min="0" placeholder="t.ex. 250" />
+      </div>
+
+      <div class="field">
+        <label for="freightPerKgUsd">
+          Fraktkostnad per kg (USD)
+        </label>
+        <input type="number" id="freightPerKgUsd" step="0.0001" min="0" placeholder="t.ex. 0.80" />
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="calcBtn" type="button">Räkna</button>
+    </div>
+
+    <!-- Resultat -->
+    <div class="results">
+      <h2>Resultat</h2>
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-label">Kostnad per pcs (USD)</div>
+          <div class="result-value" id="costPerPieceUsd">–</div>
+          <div class="result-sub" id="costPerPieceUsdSub"></div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-label">Kostnad per pcs (SEK)</div>
+          <div class="result-value" id="costPerPieceSek">–</div>
+          <div class="result-sub" id="costPerPieceSekSub"></div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-label">Total kostnad (USD)</div>
+          <div class="result-value" id="totalUsd">–</div>
+          <div class="result-sub" id="totalUsdSub"></div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-label">Total kostnad (SEK)</div>
+          <div class="result-value" id="totalSek">–</div>
+          <div class="result-sub" id="totalSekSub"></div>
+        </div>
+      </div>
+      <div class="error" id="errorMessage"></div>
+    </div>
+  </div>
+
+  <script>
+    const rateValueEl = document.getElementById("rateValue");
+    const rateStatusEl = document.getElementById("rateStatus");
+    const refreshRateBtn = document.getElementById("refreshRateBtn");
+    const calcBtn = document.getElementById("calcBtn");
+    const errorMessageEl = document.getElementById("errorMessage");
+
+    const costPerPieceUsdEl = document.getElementById("costPerPieceUsd");
+    const costPerPieceUsdSubEl = document.getElementById("costPerPieceUsdSub");
+    const costPerPieceSekEl = document.getElementById("costPerPieceSek");
+    const costPerPieceSekSubEl = document.getElementById("costPerPieceSekSub");
+    const totalUsdEl = document.getElementById("totalUsd");
+    const totalUsdSubEl = document.getElementById("totalUsdSub");
+    const totalSekEl = document.getElementById("totalSek");
+    const totalSekSubEl = document.getElementById("totalSekSub");
+
+    const unitPriceUsdEl = document.getElementById("unitPriceUsd");
+    const quantityEl = document.getElementById("quantity");
+    const totalWeightKgEl = document.getElementById("totalWeightKg");
+    const freightPerKgUsdEl = document.getElementById("freightPerKgUsd");
+
+    let usdToSekRate = null;
+
+    function formatNumber(value, decimals = 2) {
+      if (isNaN(value)) return "–";
+      return value.toLocaleString("sv-SE", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
+    }
+
+    async function fetchUsdSekRate() {
+      try {
+        refreshRateBtn.disabled = true;
+        rateStatusEl.textContent = "Hämtar aktuell kurs…";
+
+        // Gratis API för växelkurs, base USD
+        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+        if (!res.ok) throw new Error("API-fel");
+        const data = await res.json();
+
+        if (data.result !== "success" || !data.rates || !data.rates.SEK) {
+          throw new Error("Kunde inte läsa SEK-kurs");
+        }
+
+        usdToSekRate = data.rates.SEK;
+        rateValueEl.textContent = formatNumber(usdToSekRate, 4) + " SEK";
+        rateStatusEl.textContent = "Senast uppdaterad: " + new Date().toLocaleTimeString("sv-SE");
+      } catch (err) {
+        console.error(err);
+        rateStatusEl.textContent = "Kunde inte hämta kurs, försök igen.";
+        rateValueEl.textContent = "–";
+        usdToSekRate = null;
+      } finally {
+        refreshRateBtn.disabled = false;
+      }
+    }
+
+    function calculate() {
+      errorMessageEl.textContent = "";
+
+      const unitPriceUsd = parseFloat(unitPriceUsdEl.value.replace(",", "."));
+      const quantity = parseFloat(quantityEl.value.replace(",", "."));
+      const totalWeightKg = parseFloat(totalWeightKgEl.value.replace(",", "."));
+      const freightPerKgUsd = parseFloat(freightPerKgUsdEl.value.replace(",", "."));
+
+      if (!usdToSekRate) {
+        errorMessageEl.textContent = "Ingen valutakurs tillgänglig. Hämta kurs innan du räknar.";
+        return;
+      }
+
+      if (!(unitPriceUsd >= 0) || !(quantity > 0)) {
+        errorMessageEl.textContent = "Ange minst inpris per pcs (USD) och ett antal pcs större än 0.";
+        return;
+      }
+
+      const weight = totalWeightKg > 0 ? totalWeightKg : 0;
+      const freightPerKg = freightPerKgUsd > 0 ? freightPerKgUsd : 0;
+
+      // Beräkningar:
+      // Varukostnad = unitPriceUsd * quantity
+      // Frakt totalt = totalWeightKg * freightPerKgUsd
+      // Totalt USD = varukostnad + frakt
+      const goodsTotalUsd = unitPriceUsd * quantity;
+      const freightTotalUsd = weight * freightPerKg;
+      const totalUsd = goodsTotalUsd + freightTotalUsd;
+      const costPerPieceUsd = totalUsd / quantity;
+
+      const totalSek = totalUsd * usdToSekRate;
+      const costPerPieceSek = costPerPieceUsd * usdToSekRate;
+
+      costPerPieceUsdEl.textContent = formatNumber(costPerPieceUsd, 4) + " USD";
+      costPerPieceUsdSubEl.textContent =
+        "Varukostnad + frakt fördelat på " + formatNumber(quantity, 0) + " pcs";
+
+      costPerPieceSekEl.textContent = formatNumber(costPerPieceSek, 2) + " SEK";
+      costPerPieceSekSubEl.textContent =
+        "Baserat på aktuell USD/SEK-kurs";
+
+      totalUsdEl.textContent = formatNumber(totalUsd, 2) + " USD";
+      totalUsdSubEl.textContent =
+        "Varor: " +
+        formatNumber(goodsTotalUsd, 2) +
+        " + frakt: " +
+        formatNumber(freightTotalUsd, 2);
+
+      totalSekEl.textContent = formatNumber(totalSek, 2) + " SEK";
+      totalSekSubEl.textContent = "Totalt inkl. frakt i SEK";
+    }
+
+    // Eventlyssnare
+    refreshRateBtn.addEventListener("click", fetchUsdSekRate);
+    calcBtn.addEventListener("click", calculate);
+
+    // Hämta kurs direkt vid start
+    fetchUsdSekRate();
+
+    // Uppdatera kurs t.ex. var 10:e minut
+    setInterval(fetchUsdSekRate, 10 * 60 * 1000);
+  </script>
+</body>
+</html>
